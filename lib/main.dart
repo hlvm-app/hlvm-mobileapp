@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:auth/auth.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import 'package:vibration/vibration.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -21,7 +22,7 @@ class MyHome extends StatelessWidget {
         child: ElevatedButton(
           onPressed: () {
             Navigator.of(context).push(MaterialPageRoute(
-              builder: (context) => const QRViewExample(),
+              builder: (context) => const LoginForm(),
             ));
           },
           child: const Text('Scan'),
