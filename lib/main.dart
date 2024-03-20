@@ -1,38 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'state/state.dart';
-import 'auth/auth.dart';
-import 'qr/qrview.dart';
+import 'package:hlvm_mobileapp/state/state.dart';
+import 'package:hlvm_mobileapp/auth/auth.dart';
+import 'package:hlvm_mobileapp/qr/qrview.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  SharedPreferences preferences = await SharedPreferences.getInstance();
+  bool isLoggedIn = preferences.getBool('isLoggedIn') ?? false;
+
   runApp(
-    ChangeNotifierProvider(
-      create: (context) => AuthProvider(),
-      child: MyApp(),
-    ),
-  );
-}
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Consumer<AuthProvider>(
-        builder: (context, authProvider, child) {
-          if (authProvider.isLoggedIn) {
-            return MyHome();
-          } else {
-            return LoginForm();
-          }
-        },
-      ),
-      routes: {
-        '/myHome': (context) => MyHome(),
-        '/qrView': (context) => QRViewExample(),
-      },
-      debugShowCheckedModeBanner: false,
-    );
-  }
+      MaterialApp(
+          home: isLoggedIn ? MyHome() : LoginForm(),
+          routes: {
+            '/MyHome': (context) => MyHome(),
+            '/qrView': (context) => QRViewExample(),
+          },
+          debugShowCheckedModeBanner: false
+      ));
 }
 
 

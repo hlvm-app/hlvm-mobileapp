@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hlvm_mobileapp/main.dart';
 import 'package:http/http.dart' as http;
-import 'package:provider/provider.dart';
 import 'package:hlvm_mobileapp/state/state.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 class LoginForm extends StatefulWidget {
@@ -25,8 +25,9 @@ class _LoginFormState extends State<LoginForm> {
       'password': _passwordController.text, 
     }));
     if (response.statusCode == 200) {
-      Provider.of<AuthProvider>(context, listen: false).setLoggedIn(true);
-      Navigator.pushReplacementNamed(context, '/MyHome');
+      SharedPreferences preferences = await SharedPreferences.getInstance();
+      await preferences.setBool('isLoggedIn', true);
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyHome()));
       print(response.body);
     } else { 
       print('Неудача');
