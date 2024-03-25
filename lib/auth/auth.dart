@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:hlvm_mobileapp/main.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 
 class LoginForm extends StatefulWidget {
@@ -15,7 +16,8 @@ class LoginForm extends StatefulWidget {
  
 class _LoginFormState extends State<LoginForm> { 
   final _usernameController = TextEditingController(); 
-  final _passwordController = TextEditingController(); 
+  final _passwordController = TextEditingController();
+  final _storage = FlutterSecureStorage();
  
   Future<void> _login() async {
     final response = await http.post(
@@ -26,8 +28,12 @@ class _LoginFormState extends State<LoginForm> {
     if (response.statusCode == 200) {
       SharedPreferences preferences = await SharedPreferences.getInstance();
       await preferences.setBool('isLoggedIn', true);
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyHome()));
-      print(response.body);
+
+      final responseData = jsonDecode(response.body);
+      final token = responseData['token'];
+      final user = responseData['user'];
+      await _storage.write(key: user, value: token);
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyHome(user: user)));
     } else { 
       print('Неудача');
     } 

@@ -42,6 +42,7 @@ dependencies:
   qr_code_scanner: any
   vibration: any
   url_launcher: any
+  flutter_secure_storage: ^4.2.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
