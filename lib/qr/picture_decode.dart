@@ -20,7 +20,7 @@ class PictureDecode extends StatefulWidget {
     Navigator.of(context).pushNamed(routeName);
   }
 
-  const PictureDecode({Key? key}) : super(key: key);
+  const PictureDecode({super.key});
 
   @override
   State<PictureDecode> createState() => _PictureDecodeState();

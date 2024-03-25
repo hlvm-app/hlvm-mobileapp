@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hlvm_mobileapp/main.dart';
 import 'package:http/http.dart' as http;
-import 'package:hlvm_mobileapp/state/state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 

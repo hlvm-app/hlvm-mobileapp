@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:hlvm_mobileapp/auth/auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hlvm_mobileapp/qr/live_decode.dart';
@@ -30,46 +29,73 @@ class _MyHomeState extends State<MyHome> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-          title: const Text(
-        'Hasta La Vista, Money!',
-        style: TextStyle(color: Colors.green),
-      )),
-      body: Row(
-        children: [
-          SafeArea(
-            child: NavigationRail(
-              extended: false,
-              destinations: [
-                NavigationRailDestination(
-                    icon: Icon(Icons.home), label: Text('Домашняя страница')),
-                NavigationRailDestination(
-                    icon: Icon(Icons.receipt), label: Text('Чеки')),
-              ],
-              selectedIndex: selectedIndex,
-              onDestinationSelected: (value) {
-                setState(() {
-                  selectedIndex = value;
-                });
-              },
-            ),
+    Widget page;
+    switch (selectedIndex) {
+      case 0:
+        page = Center(
+          child: Text(
+            'Домашняя страница',
+            style: TextStyle(fontSize: 25),
           ),
-          Expanded(
-              child: Align(
-            alignment: Alignment.topRight,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (selectedIndex == 0 || selectedIndex == 1)
+        );
+      case 1:
+        page = ReceiptPage();
+      default:
+        throw UnimplementedError('no widget for $selectedIndex');
+    }
+    return LayoutBuilder(builder: (context, constraints) {
+      return Scaffold(
+        body: Row(
+          children: [
+            SafeArea(
+              child: NavigationRail(
+                extended: constraints.maxWidth >= 600,
+                destinations: [
+                  NavigationRailDestination(
+                      icon: Icon(Icons.home), label: Text('Домашняя страница')),
+                  NavigationRailDestination(
+                      icon: Icon(Icons.receipt), label: Text('Чеки')),
+                ],
+                selectedIndex: selectedIndex,
+                onDestinationSelected: (value) {
+                  setState(() {
+                    selectedIndex = value;
+                  });
+                },
+              ),
+            ),
+            Expanded(
+              child: Container(
+                color: Theme.of(context).colorScheme.primaryContainer,
+                child: page,
+              ),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+}
+
+class ReceiptPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        color: Theme.of(context).colorScheme.primaryContainer,
+        child: SafeArea(
+          child: Align(
+              alignment: Alignment.topRight,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                   ElevatedButton(
                     onPressed: () => LiveDecodePage.open(context),
                     child: const Icon(Icons.qr_code_scanner_outlined),
                   ),
-              ],
-            ),
-          )),
-        ],
+                ],
+              )),
+        ),
       ),
     );
   }

@@ -69,13 +69,13 @@ class LiveDecodePageState extends State<LiveDecodePage> {
                         },
                         child: Icon(Icons.arrow_back)),
                     SizedBox(width: 10.0,),
-                    ElevatedButton(
-                      onPressed: () {
-                        _copyToClipboard(currentResult!.text);
-                      },
+                    if (currentResult != null)
+                      ElevatedButton(
+                        onPressed: () {
+                          _copyToClipboard(currentResult!.text);
+                        },
                       child: Text('Copy to Clipboard'),
                     ),
-
                   ],
                 ),
               ],
