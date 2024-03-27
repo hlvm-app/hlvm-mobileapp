@@ -4,6 +4,8 @@ import 'package:vibration/vibration.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
 
+import 'package:hlvm_mobileapp/prepare/prepare_data.dart';
+
 ///
 /// Created by
 ///
@@ -45,6 +47,15 @@ class LiveDecodePageState extends State<LiveDecodePage> {
           setState(() {
             currentResult = result;
           });
+          if (currentResult != null) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PrepareDataQRCode(data: currentResult!.text),
+              ),
+            );
+            _copyToClipboard(currentResult!.text);
+          }
         },
         child: Align(
           alignment: Alignment.bottomCenter,
@@ -68,14 +79,6 @@ class LiveDecodePageState extends State<LiveDecodePage> {
                           Navigator.pop(context);
                         },
                         child: Icon(Icons.arrow_back)),
-                    SizedBox(width: 10.0,),
-                    if (currentResult != null)
-                      ElevatedButton(
-                        onPressed: () {
-                          _copyToClipboard(currentResult!.text);
-                        },
-                      child: Text('Copy to Clipboard'),
-                    ),
                   ],
                 ),
               ],
@@ -111,8 +114,8 @@ class LiveDecodePageState extends State<LiveDecodePage> {
   }
 
   void _launchURL(String url) async {
-    if (await canLaunchUrl(url as Uri)) {
-      await launchUrl(url as Uri);
+    if (await canLaunch(url)) {
+      await launch(url);
     } else {
       throw 'Could not launch $url';
     }

@@ -6,16 +6,20 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hlvm_mobileapp/qr/live_decode.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SharedPreferences preferences = await SharedPreferences.getInstance();
   bool isLoggedIn = preferences.getBool('isLoggedIn') ?? false;
-  final _storage = FlutterSecureStorage();
-  String? user = await _storage.read(key: 'user');
+  String? user = preferences.getString('user');
+  print(user);
+  print(isLoggedIn);
+  await dotenv.load();
 
   runApp(MaterialApp(
-      home: isLoggedIn ? MyHome(user: user) : LoginForm(),
+      home: isLoggedIn ? MyHome(user: user!) : LoginForm(),
       routes: {
         '/MyHome': (context) => MyHome(user: user),
         LiveDecodePage.routeName: (context) => const LiveDecodePage(),
@@ -25,20 +29,13 @@ void main() async {
 
 class MyHome extends StatefulWidget {
   final String? user;
-  const MyHome({Key? key, required this.user}) : super(key: key);
+  const MyHome({super.key, required this.user});
 
   @override
   State<MyHome> createState() => _MyHomeState();
 }
 
 class _MyHomeState extends State<MyHome> {
-  @override
-  void initState() {
-    super.initState();
-    if (widget.user == null) {
-      _logout();
-    }
-  }
   var selectedIndex = 0;
 
   @override
@@ -46,7 +43,7 @@ class _MyHomeState extends State<MyHome> {
     Widget page;
     switch (selectedIndex) {
       case 0:
-        page = AccountPage(user: widget.user!);
+        page = AccountPage(user: widget.user ?? '');
       case 1:
         page = ReceiptPage();
       default:
@@ -90,8 +87,12 @@ class _MyHomeState extends State<MyHome> {
     });
   }
   void _logout() async {
-    SharedPreferences preferences = await SharedPreferences.getInstance();
+    final preferences = await SharedPreferences.getInstance();
     await preferences.setBool('isLoggedIn', false);
+
+    final storage = FlutterSecureStorage();
+    await storage.delete(key: 'user');
+
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => LoginForm()),
@@ -104,9 +105,8 @@ class AccountPage extends StatelessWidget {
   final Future<String?> tokenFuture;
   final storage = FlutterSecureStorage();
 
-  AccountPage({Key? key, required this.user})
-      : tokenFuture = _initTokenFuture(user!),
-        super(key: key);
+  AccountPage({super.key, required this.user})
+      : tokenFuture = _initTokenFuture(user!);
 
   static Future<String?> _initTokenFuture(String user) async {
     final storage = FlutterSecureStorage();

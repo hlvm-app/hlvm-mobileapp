@@ -32,10 +32,27 @@ class _LoginFormState extends State<LoginForm> {
       final responseData = jsonDecode(response.body);
       final token = responseData['token'];
       final user = responseData['user'];
+      await preferences.setString('user', user);
       await _storage.write(key: user, value: token);
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyHome(user: user)));
-    } else { 
-      print('Неудача');
+    } else {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Ошибка входа'),
+            content: Text('Имя пользователя или пароль неверны.'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
     } 
   }
 
@@ -45,23 +62,30 @@ class _LoginFormState extends State<LoginForm> {
       appBar: AppBar(
         title: Text('Login'),
       ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          TextField(
-            controller: _usernameController,
-            decoration: InputDecoration(hintText: 'Введите имя пользователя'),
-          ),
-          TextField(
-            controller: _passwordController,
-            decoration: InputDecoration(hintText: 'Введите пароль'),
-            obscureText: true,
-          ),
-          ElevatedButton(
-            onPressed: _login,
-            child: Text('Войти'),
-          ),
-        ],
+      body: AutofillGroup(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            TextField(
+              controller: _usernameController,
+              decoration: InputDecoration(hintText: 'Введите имя пользователя'),
+              keyboardType: TextInputType.text,
+              onSubmitted: (_) => _login(),
+            ),
+            TextField(
+              controller: _passwordController,
+              decoration: InputDecoration(hintText: 'Введите пароль'),
+              obscureText: true,
+              keyboardType: TextInputType.visiblePassword,
+              onSubmitted: (_) => _login(),
+            ),
+            ElevatedButton(
+              autofocus: true,
+              onPressed: _login,
+              child: Text('Войти'),
+            ),
+          ],
+        ),
       ),
     );
   }
