@@ -60,25 +60,45 @@ class _LoginFormState extends State<LoginForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Login'),
+        title: Center(child: Text('Hasta La Vista, Money!')),
       ),
       body: AutofillGroup(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            TextField(
-              controller: _usernameController,
-              decoration: InputDecoration(hintText: 'Введите имя пользователя'),
-              keyboardType: TextInputType.text,
-              onSubmitted: (_) => _login(),
+            Container(
+              margin: EdgeInsets.symmetric(horizontal: 20.0),
+              child: TextField(
+                controller: _usernameController,
+                decoration: InputDecoration(
+                    hintText: 'Введите имя пользователя',
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.0)
+                    ),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0)
+                ),
+                keyboardType: TextInputType.text,
+                onSubmitted: (_) => _login(),
+              ),
             ),
-            TextField(
-              controller: _passwordController,
-              decoration: InputDecoration(hintText: 'Введите пароль'),
-              obscureText: true,
-              keyboardType: TextInputType.visiblePassword,
-              onSubmitted: (_) => _login(),
+            SizedBox(height: 10),
+            Container(
+              margin: EdgeInsets.symmetric(horizontal: 20.0),
+              child: TextField(
+                controller: _passwordController,
+                decoration: InputDecoration(
+                    hintText: 'Введите пароль',
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10.0)
+                    ),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0)
+                ),
+                obscureText: true,
+                keyboardType: TextInputType.visiblePassword,
+                onSubmitted: (_) => _login(),
+              ),
             ),
+            SizedBox(height: 10),
             ElevatedButton(
               autofocus: true,
               onPressed: _login,
