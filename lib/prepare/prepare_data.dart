@@ -1,3 +1,4 @@
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -8,6 +9,32 @@ class PrepareDataQRCode extends StatelessWidget {
 
   const PrepareDataQRCode({super.key, this.data});
 
+  dynamic findValueByKey(Map<String, dynamic> json, String key) {
+    dynamic result;
+
+    // Перебираем все элементы словаря
+    json.forEach((k, v) {
+      // Если ключ совпадает, сохраняем значение
+      if (k == key) {
+        result = v;
+      }
+      // Если значение - словарь, рекурсивно ищем в нем
+      if (v is Map<String, dynamic>) {
+        var innerResult = findValueByKey(v, key);
+        // Если нашли внутренний результат, используем его
+        if (innerResult != null) {
+          result = innerResult;
+        }
+      }
+      // Если уже нашли результат, выходим из цикла
+      if (result != null) {
+        return;
+      }
+    });
+
+    return result;
+  }
+
   Future<void> _getJson() async {
     final token = dotenv.env['TOKEN'];
     final response =
@@ -17,7 +44,10 @@ class PrepareDataQRCode extends StatelessWidget {
               'qrraw': data,
             });
     if (response.statusCode == 200) {
-      print(response.body);
+      Map<String, dynamic> jsonData = jsonDecode(response.body);
+      print(jsonData);
+      print('Seller: ${findValueByKey(jsonData, 'user')}');
+      print('Items: ${findValueByKey(jsonData, 'items')}');
     } else {
       print(response.statusCode);
       print(response);

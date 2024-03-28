@@ -23,6 +23,9 @@ void main() async {
         '/MyHome': (context) => MyHome(user: user),
         LiveDecodePage.routeName: (context) => const LiveDecodePage(),
       },
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green, brightness: Brightness.dark,)
+      ),
       debugShowCheckedModeBanner: false));
 }
 
@@ -42,8 +45,10 @@ class _MyHomeState extends State<MyHome> {
     Widget page;
     switch (selectedIndex) {
       case 0:
-        page = AccountPage(user: widget.user ?? '');
+        page = HomePage();
       case 1:
+        page = AccountPage(user: widget.user ?? '');
+      case 2:
         page = ReceiptPage();
       default:
         throw UnimplementedError('no widget for $selectedIndex');
@@ -58,6 +63,8 @@ class _MyHomeState extends State<MyHome> {
                 destinations: [
                   NavigationRailDestination(
                       icon: Icon(Icons.home), label: Text('Домашняя страница')),
+                  NavigationRailDestination(
+                      icon: Icon(Icons.account_balance_wallet_outlined), label: Text('Счета')),
                   NavigationRailDestination(
                       icon: Icon(Icons.receipt), label: Text('Чеки')),
                 ],
@@ -98,6 +105,19 @@ class _MyHomeState extends State<MyHome> {
     );
   }
 }
+
+class HomePage extends StatelessWidget {
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: Text('Домашняя страница', style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),),
+      ),
+    );
+  }
+}
+
 
 class AccountPage extends StatelessWidget {
   final String? user;
@@ -146,9 +166,17 @@ class AccountPage extends StatelessWidget {
       future: tokenFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return CircularProgressIndicator();
+          return Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
         } else if (snapshot.hasError) {
-          return Text('Ошибка при получении токена');
+          return Scaffold(
+            body: Center(
+              child: Text('Ошибка при получении токена'),
+            ),
+          );
         } else {
           final token = snapshot.data;
           if (token != null) {
@@ -156,9 +184,17 @@ class AccountPage extends StatelessWidget {
               future: _getAccount(token),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return CircularProgressIndicator();
+                  return Scaffold(
+                    body: Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
                 } else if (snapshot.hasError) {
-                  return Text('Ошибка при получении списка счетов');
+                  return Scaffold(
+                    body: Center(
+                      child: Text('Ошибка при получении списка счетов'),
+                    ),
+                  );
                 } else {
                   final List<Map<String, dynamic>> accounts = snapshot.data ?? [];
                   return Scaffold(
@@ -168,9 +204,13 @@ class AccountPage extends StatelessWidget {
                         itemCount: accounts.length,
                         itemBuilder: (context, index) {
                           final account = accounts[index];
-                          return ListTile(
-                            title: Text(account['name_account']),
-                            subtitle: Text('Баланс: ${account['balance']} ${account['currency']}'),
+                          return Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: AccountCard(
+                              name: account['name_account'],
+                              balance: account['balance'],
+                              currency: account['currency'],
+                            ),
                           );
                         },
                       ),
@@ -187,6 +227,43 @@ class AccountPage extends StatelessWidget {
     );
   }
 }
+
+class AccountCard extends StatelessWidget {
+  const AccountCard({
+    super.key,
+    required this.name,
+    required this.balance,
+    required this.currency,
+  });
+
+  final String name;
+  final String balance;
+  final String currency;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(15),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              name,
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 3),
+            Text(
+              'Баланс: $balance $currency',
+              style: TextStyle(fontSize: 11),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 
 
 
