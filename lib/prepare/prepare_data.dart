@@ -12,21 +12,19 @@ class PrepareDataQRCode extends StatelessWidget {
   dynamic findValueByKey(Map<String, dynamic> json, String key) {
     dynamic result;
 
-    // Перебираем все элементы словаря
     json.forEach((k, v) {
-      // Если ключ совпадает, сохраняем значение
       if (k == key) {
         result = v;
       }
-      // Если значение - словарь, рекурсивно ищем в нем
+
       if (v is Map<String, dynamic>) {
         var innerResult = findValueByKey(v, key);
-        // Если нашли внутренний результат, используем его
+
         if (innerResult != null) {
           result = innerResult;
         }
       }
-      // Если уже нашли результат, выходим из цикла
+
       if (result != null) {
         return;
       }
