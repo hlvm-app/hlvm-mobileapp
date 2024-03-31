@@ -46,6 +46,8 @@ class PrepareDataQRCode extends StatelessWidget {
       print(jsonData);
       print('Seller: ${findValueByKey(jsonData, 'user')}');
       print('Items: ${findValueByKey(jsonData, 'items')}');
+      print('retailPlaceAddress: ${findValueByKey(jsonData, 'retailPlaceAddress')}');
+      print('retailPlace: ${findValueByKey(jsonData, 'retailPlace')}');
     } else {
       print(response.statusCode);
       print(response);

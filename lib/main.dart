@@ -119,17 +119,48 @@ class HomePage extends StatelessWidget {
 }
 
 
-class AccountPage extends StatelessWidget {
+class AccountPage extends StatefulWidget {
   final String? user;
-  final Future<String?> tokenFuture;
-  final storage = FlutterSecureStorage();
 
-  AccountPage({super.key, required this.user})
-      : tokenFuture = _initTokenFuture(user!);
+
+  AccountPage({Key? key, required this.user}) : super(key: key);
+
+  late final Future<String?> tokenFuture = _initTokenFuture(user!);
+
+
+  @override
+  State<AccountPage> createState() => _AccountPageState();
 
   static Future<String?> _initTokenFuture(String user) async {
     final storage = FlutterSecureStorage();
     return await storage.read(key: user);
+  }
+}
+
+class _AccountPageState extends State<AccountPage> {
+  final storage = FlutterSecureStorage();
+  late int? selectedAccountId;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSelectedAccount();
+  }
+
+  Future<void> _loadSelectedAccount() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      selectedAccountId = prefs.getInt('selectedAccount');
+
+    });
+  }
+
+  Future<void> _selectAccount(int id) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      selectedAccountId = id;
+    });
+    prefs.setInt('selectedAccount', id);
   }
 
   Future<List<Map<String, dynamic>>?> _getAccount(String? token) async {
@@ -144,6 +175,7 @@ class AccountPage extends StatelessWidget {
         final List<Map<String, dynamic>> accounts = [];
         for (var item in decodedResponse) {
           accounts.add({
+            'id': item['id'],
             'name_account': item['name_account'],
             'balance': item['balance'].toString(),
             'currency': item['currency'].toString(),
@@ -163,7 +195,7 @@ class AccountPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<String?>(
-      future: tokenFuture,
+      future: widget.tokenFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Scaffold(
@@ -207,9 +239,12 @@ class AccountPage extends StatelessWidget {
                           return Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: AccountCard(
+                              id: account['id'] ?? 0,
                               name: account['name_account'],
                               balance: account['balance'],
                               currency: account['currency'],
+                              isSelected: selectedAccountId == account['id'],
+                              onSelect: () => _selectAccount(account['id']),
                             ),
                           );
                         },
@@ -228,43 +263,62 @@ class AccountPage extends StatelessWidget {
   }
 }
 
-class AccountCard extends StatelessWidget {
+
+class AccountCard extends StatefulWidget {
   const AccountCard({
     super.key,
+    required this.id,
     required this.name,
     required this.balance,
     required this.currency,
+    required this.isSelected,
+    required this.onSelect,
   });
 
+  final int id;
   final String name;
   final String balance;
   final String currency;
+  final bool isSelected;
+  final Function onSelect;
 
   @override
+  State<AccountCard> createState() => _AccountCardState();
+}
+
+class _AccountCardState extends State<AccountCard> {
+  @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(15),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              name,
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+    return InkWell(
+      onTap: () {
+        widget.onSelect();
+      },
+      child: AnimatedOpacity(
+        opacity: widget.isSelected ? 0.5 : 1.0,
+        duration: const Duration(milliseconds: 200),
+        child: Card(
+          child: Padding(
+            padding: const EdgeInsets.all(15),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.name,
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 3),
+                Text(
+                  'Баланс: ${widget.balance} ${widget.currency}',
+                  style: TextStyle(fontSize: 11),
+                ),
+              ],
             ),
-            SizedBox(height: 3),
-            Text(
-              'Баланс: $balance $currency',
-              style: TextStyle(fontSize: 11),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 }
-
-
 
 
 class ReceiptPage extends StatelessWidget {
