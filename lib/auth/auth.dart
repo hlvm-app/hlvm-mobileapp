@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:hlvm_mobileapp/main.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:hlvm_mobileapp/prepare/prepare_data.dart';
 
 
 class LoginForm extends StatefulWidget {
@@ -17,7 +17,6 @@ class LoginForm extends StatefulWidget {
 class _LoginFormState extends State<LoginForm> { 
   final _usernameController = TextEditingController(); 
   final _passwordController = TextEditingController();
-  final _storage = FlutterSecureStorage();
  
   Future<void> _login() async {
     final response = await http.post(
@@ -31,10 +30,12 @@ class _LoginFormState extends State<LoginForm> {
 
       final responseData = jsonDecode(response.body);
       final token = responseData['token'];
+      print(token);
       final user = responseData['user'];
+      print(user);
       await preferences.setString('user', user);
-      await _storage.write(key: user, value: token);
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyHome(user: user)));
+      await preferences.setString('token', token);
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MyHome(token: token)));
     } else {
       showDialog(
         context: context,

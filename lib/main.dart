@@ -7,31 +7,32 @@ import 'package:hlvm_mobileapp/qr/live_decode.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:hlvm_mobileapp/prepare/prepare_data.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SharedPreferences preferences = await SharedPreferences.getInstance();
   bool isLoggedIn = preferences.getBool('isLoggedIn') ?? false;
-  String? user = preferences.getString('user');
-  print(user);
+  String? token = preferences.getString('token');
+  print(token);
   print(isLoggedIn);
   await dotenv.load();
 
   runApp(MaterialApp(
-      home: isLoggedIn ? MyHome(user: user!) : LoginForm(),
+      home: isLoggedIn ? MyHome(token: token!) : LoginForm(),
       routes: {
-        '/MyHome': (context) => MyHome(user: user),
+        '/MyHome': (context) => MyHome(token: token),
         LiveDecodePage.routeName: (context) => const LiveDecodePage(),
       },
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green, brightness: Brightness.dark,)
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.green, brightness: Brightness.dark,)
       ),
       debugShowCheckedModeBanner: false));
 }
 
 class MyHome extends StatefulWidget {
-  final String? user;
-  const MyHome({super.key, required this.user});
+  final String? token;
+  const MyHome({super.key, required this.token});
 
   @override
   State<MyHome> createState() => _MyHomeState();
@@ -47,7 +48,7 @@ class _MyHomeState extends State<MyHome> {
       case 0:
         page = HomePage();
       case 1:
-        page = AccountPage(user: widget.user ?? '');
+        page = AccountPage(token: widget.token ?? '');
       case 2:
         page = ReceiptPage();
       default:
@@ -97,7 +98,7 @@ class _MyHomeState extends State<MyHome> {
     await preferences.setBool('isLoggedIn', false);
 
     final storage = FlutterSecureStorage();
-    await storage.delete(key: 'user');
+    await storage.delete(key: 'token');
 
     Navigator.pushReplacement(
       context,
@@ -120,21 +121,13 @@ class HomePage extends StatelessWidget {
 
 
 class AccountPage extends StatefulWidget {
-  final String? user;
+  final String? token;
 
 
-  AccountPage({Key? key, required this.user}) : super(key: key);
-
-  late final Future<String?> tokenFuture = _initTokenFuture(user!);
-
+  AccountPage({Key? key, this.token}) : super(key: key);
 
   @override
   State<AccountPage> createState() => _AccountPageState();
-
-  static Future<String?> _initTokenFuture(String user) async {
-    final storage = FlutterSecureStorage();
-    return await storage.read(key: user);
-  }
 }
 
 class _AccountPageState extends State<AccountPage> {
@@ -160,6 +153,7 @@ class _AccountPageState extends State<AccountPage> {
     setState(() {
       selectedAccountId = id;
     });
+    print(widget.token);
     prefs.setInt('selectedAccount', id);
   }
 
@@ -192,10 +186,11 @@ class _AccountPageState extends State<AccountPage> {
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<String?>(
-      future: widget.tokenFuture,
+    return FutureBuilder<List<Map<String, dynamic>>?>(
+      future: _getAccount(widget.token),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Scaffold(
@@ -206,57 +201,36 @@ class _AccountPageState extends State<AccountPage> {
         } else if (snapshot.hasError) {
           return Scaffold(
             body: Center(
-              child: Text('Ошибка при получении токена'),
+              child: Text('Ошибка при получении списка счетов'),
             ),
           );
         } else {
-          final token = snapshot.data;
-          if (token != null) {
-            return FutureBuilder<List<Map<String, dynamic>>?>(
-              future: _getAccount(token),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Scaffold(
-                    body: Center(
-                      child: CircularProgressIndicator(),
+          final List<Map<String, dynamic>> accounts = snapshot.data ?? [];
+          return Scaffold(
+            body: Container(
+              color: Theme.of(context).colorScheme.primaryContainer,
+              child: ListView.builder(
+                itemCount: accounts.length,
+                itemBuilder: (context, index) {
+                  final account = accounts[index];
+                  return Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: AccountCard(
+                      id: account['id'] ?? 0,
+                      name: account['name_account'],
+                      balance: account['balance'],
+                      currency: account['currency'],
+
+                      isSelected: selectedAccountId == account['id'],
+                      onSelect: () async {
+                        await _selectAccount(account['id']);
+                      },
                     ),
                   );
-                } else if (snapshot.hasError) {
-                  return Scaffold(
-                    body: Center(
-                      child: Text('Ошибка при получении списка счетов'),
-                    ),
-                  );
-                } else {
-                  final List<Map<String, dynamic>> accounts = snapshot.data ?? [];
-                  return Scaffold(
-                    body: Container(
-                      color: Theme.of(context).colorScheme.primaryContainer,
-                      child: ListView.builder(
-                        itemCount: accounts.length,
-                        itemBuilder: (context, index) {
-                          final account = accounts[index];
-                          return Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: AccountCard(
-                              id: account['id'] ?? 0,
-                              name: account['name_account'],
-                              balance: account['balance'],
-                              currency: account['currency'],
-                              isSelected: selectedAccountId == account['id'],
-                              onSelect: () => _selectAccount(account['id']),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  );
-                }
-              },
-            );
-          } else {
-            return Text('Токен отсутствует');
-          }
+                },
+              ),
+            ),
+          );
         }
       },
     );
