@@ -51,147 +51,277 @@ class PrepareDataQRCode extends StatelessWidget {
     }
   }
 
-  Future<void> createCustomerAndGetId(String token, accountId) async {
-    final response = await http.post(
-      Uri.parse('https://hlvm.ru/receipts/customer/api/create'),
-      headers: <String, String>{
-        'Authorization': 'Token $token',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(<String, dynamic>{
-        'user': 1,
-        'name_seller': 'Example Seller', // Здесь передайте данные о продавце
-        'retail_place_address': '123 Main Street',
-        'retail_place': 'Example Store',
-        // Другие данные о продавце, если необходимо
-      }),
-    );
 
-    if (response.statusCode == 201) {
-      // Если пользователь успешно создан
-      final Map<String, dynamic> responseData = jsonDecode(response.body);
-      final customerId = responseData['id'];
-      print('Customer ID: $customerId');
-
-      await _createReceiptWithCustomerId(token, customerId, accountId);
+  double _convertSum(dynamic number) {
+    if (number != null) {
+      return number / 100;
     } else {
-      // Обработка ошибок
-      print('Failed to create customer. Status code: ${response.statusCode}');
-      print(response.body);
+      return 0;
     }
   }
 
-
-  Future<void> _createReceiptWithCustomerId(String token, int customerId, accountId) async {
-    // String? usernameData = await getUsername();
-    final jData = PrepareDataQRCode();
-    final jsonData = await jData.getJson();
-    print('JSON: $jsonData');
-    // Map<String, dynamic> usernameJsonData = jsonDecode(usernameData!);
-    // int usernameId = usernameJsonData['id'];
-    final response = await http.post(
-      Uri.parse('https://hlvm.ru/receipts/api/create'),
-      headers: <String, String>{
-        'Authorization': 'Token $token',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(<String, dynamic>{
-        // 'user': usernameId,
-        'account': accountId,
-        'receipt_date': '2023-11-21T12:00:00Z',
-        'number_receipt': 123456789,
-        'nds10': 10.0,
-        'nds20': 10.0,
-        'operation_type': 1,
-        'total_sum': 500,
-        'customer': customerId,
-        'product': [
-          {
-            // 'user': usernameId,
-            'product_name': 'Product 1',
-            'price': 10.00,
-            'quantity': 2,
-            'nds_type': 10,
-          },
-          {
-            // 'user': usernameId,
-            'product_name': 'Product 2',
-            'price': 5.00,
-            'quantity': 1,
-            'nds_type': 20,
-          },
-        ],
-      }),
-    );
-
-    if (response.statusCode == 201) {
-      print('Receipt created successfully.');
-    } else {
-      print('Failed to create receipt. Status code: ${response.statusCode}');
-      print(response.body);
-    }
-  }
-
-  Future<void> _createReceipt() async {
+  Future<void> _createReceipt(BuildContext context, Map<String, dynamic> jsonData) async {
     SharedPreferences preferences = await SharedPreferences.getInstance();
     String? token = preferences.getString('token');
+    int? selectedAccount = preferences.getInt('selectedAccount');
     final responseUser = await http.get(
       Uri.parse('https://hlvm.ru/users/list/user'),
       headers: <String, String>{
         'Authorization': 'Token $token',
       },
     );
-    final jsonData = await getJson();
-    print('jsonData: $jsonData');
 
     Map<String, dynamic> user = jsonDecode(responseUser.body);
-    print(user);
 
-    final nameSeller = findValueByKey(jsonData!, 'user');
+    final nameSeller = findValueByKey(jsonData, 'user');
     final retailPlaceAddress = findValueByKey(jsonData, 'retailPlaceAddress');
     final retailPlace = findValueByKey(jsonData, 'retailPlace');
-    final response = await http.post(
-      Uri.parse('https://hlvm.ru/receipts/customer/api/create'),
-      headers: <String, String>{
-        'Authorization': 'Token $token',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(<String, dynamic>{
+    final items = findValueByKey(jsonData, 'items');
+    final receiptDate = findValueByKey(jsonData, 'dateTime');
+    final numberReceipt = findValueByKey(jsonData, 'fiscalDocumentNumber');
+    final nds10 = await _convertSum(findValueByKey(jsonData, 'nds10'));
+    final nds20 = await _convertSum(findValueByKey(jsonData, 'nds20'));
+    final totalSum = await _convertSum(findValueByKey(jsonData, 'totalSum'));
+    final operationType = findValueByKey(jsonData, 'operationType');
+
+    final List<Map<String, dynamic>> products = [];
+
+    for (var item in items) {
+      final name = findValueByKey(item, 'name');
+      final amount = await _convertSum(findValueByKey(item, 'sum'));
+      final quantity = findValueByKey(item, 'quantity');
+      final price = await _convertSum(findValueByKey(item, 'price'));
+      final ndsType = findValueByKey(item, 'nds');
+      final ndsNum = await _convertSum(findValueByKey(item, 'ndsSum'));
+      products.add({
         'user': user['id'],
-        'name_seller': nameSeller, // Здесь передайте данные о продавце
-        'retail_place_address': retailPlaceAddress,
-        'retail_place': retailPlace,
-      }),
+        'product_name': name,
+        'amount': amount,
+        'quantity': quantity,
+        'price': price,
+        'nds_type': ndsType,
+        'nds_sum': ndsNum,
+      });
+    }
+
+    final customer = {
+      'user': user['id'],
+      'name_seller': nameSeller,
+      'retail_place_address': retailPlaceAddress,
+      'retail_place': retailPlace,
+    };
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Confirm Receipt Creation'),
+          content: Text('Are you sure you want to create this receipt?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(false); // User canceled
+              },
+              child: Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop(true); // User confirmed
+              },
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
     );
-    if (response.statusCode == 201) {
-      final Map<String, dynamic> responseData = jsonDecode(response.body);
-      final customerId = responseData['id'];
-      print('Customer ID: $customerId');
-    } else {
-      print('Failed to create customer. Status code: ${response.statusCode}');
-      print(response.body);
+
+    if (confirmed == true) {
+        final response = await http.post(
+          Uri.parse('https://hlvm.ru/receipts/api/create'),
+          headers: <String, String>{
+            'Authorization': 'Token $token',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode(<String, dynamic>{
+            'user': user['id'],
+            'account': selectedAccount,
+            'receipt_date': receiptDate,
+            'number_receipt': numberReceipt,
+            'nds10': nds10,
+            'nds20': nds20,
+            'operation_type': operationType,
+            'total_sum': totalSum,
+            'customer': customer,
+            'product': products,
+          }),
+        );
+
+        if (response.statusCode == 201) {
+          print('Receipt created successfully.');
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Text('Success'),
+              content: Text('Receipt created successfully.'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close dialog
+                  },
+                  child: Text('OK'),
+                ),
+              ],
+            ),
+          );
+        } else {
+          print('Failed to create receipt. Status code: ${response.statusCode}');
+          print(response.body);
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: Text('Error'),
+              content: Text('Failed to create receipt. Status code: ${response.statusCode}'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close dialog
+                  },
+                  child: Text('OK'),
+                ),
+              ],
+            ),
+          );
+        }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    _createReceipt();
-    return Container(
-        color: Theme.of(context).colorScheme.primaryContainer,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Row(
+    return FutureBuilder<Map<String, dynamic>?>(
+      future: getJson(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError || snapshot.data == null) {
+          return Center(child: Text('Error fetching data'));
+        } else {
+          final jsonData = snapshot.data!;
+          final dynamic itemsData = findValueByKey(jsonData, 'items');
+
+          if (itemsData is List<dynamic>) {
+            final List<Map<String, dynamic>> items = [];
+            for (var item in itemsData) {
+              final name = findValueByKey(item, 'name');
+              final amount = _convertSum(findValueByKey(item, 'sum'));
+              final quantity = findValueByKey(item, 'quantity');
+              final price = _convertSum(findValueByKey(item, 'price'));
+              final ndsType = findValueByKey(item, 'nds');
+              final ndsNum = _convertSum(findValueByKey(item, 'ndsSum'));
+              items.add({
+                'product_name': name,
+                'amount': amount,
+                'quantity': quantity,
+                'price': price,
+                'nds_type': ndsType,
+                'nds_sum': ndsNum,
+              });
+            }
+
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
+                ReceiptCard(
+                  nameSeller: findValueByKey(jsonData, 'user'),
+                  receiptDate: findValueByKey(jsonData, 'dateTime'),
+                  totalSum: _convertSum(findValueByKey(jsonData, 'totalSum')),
+                  products: items,
+                ),
+                SizedBox(height: 7),
                 ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: Icon(Icons.arrow_back)),
+                  onPressed: () async {
+                    await _createReceipt(context, jsonData);
+                  },
+                  child: Text('Create Receipt'),
+                ),
+                SizedBox(height: 6),
               ],
+            );
+          } else {
+            // Handle if itemsData is not a List<dynamic>
+            return Center(child: Text('Error: Items data is not in the expected format'));
+          }
+        }
+      },
+    );
+  }
+
+
+}
+
+
+class ReceiptCard extends StatelessWidget {
+  final String nameSeller;
+  final String receiptDate;
+  final double? totalSum;
+  final List<Map<String, dynamic>> products;
+
+  ReceiptCard({
+    required this.nameSeller,
+    required this.receiptDate,
+    required this.totalSum,
+    required this.products,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(15),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Seller: $nameSeller',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Date: $receiptDate',
+              style: TextStyle(fontSize: 14),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Total Sum: ${totalSum?.toStringAsFixed(2)}',
+              style: TextStyle(fontSize: 14),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Products:',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 1),
+            ListView.builder(
+              shrinkWrap: true,
+              itemCount: products.length,
+              itemBuilder: (context, index) {
+                final product = products[index];
+                return ListTile(
+                  title: Text('${product['product_name']}'),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Цена: ${product['price']}'),
+                      Text('Количество: ${product['quantity']}'),
+                      Text('Сумма: ${product['amount']}'),
+                    ],
+                  ),
+                );
+              },
             ),
           ],
-        ));
+        ),
+      ),
+    );
   }
 }
