@@ -45,7 +45,6 @@ class PrepareDataQRCode extends StatelessWidget {
             });
     if (response.statusCode == 200) {
       Map<String, dynamic> jsonData = jsonDecode(response.body);
-      print('getJson $jsonData');
       return jsonData;
     } else {
       return null;
@@ -133,8 +132,50 @@ class PrepareDataQRCode extends StatelessWidget {
     }
   }
 
+  Future<void> _createReceipt() async {
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    String? token = preferences.getString('token');
+    final responseUser = await http.get(
+      Uri.parse('https://hlvm.ru/users/list/user'),
+      headers: <String, String>{
+        'Authorization': 'Token $token',
+      },
+    );
+    final jsonData = await getJson();
+    print('jsonData: $jsonData');
+
+    Map<String, dynamic> user = jsonDecode(responseUser.body);
+    print(user);
+
+    final nameSeller = findValueByKey(jsonData!, 'user');
+    final retailPlaceAddress = findValueByKey(jsonData, 'retailPlaceAddress');
+    final retailPlace = findValueByKey(jsonData, 'retailPlace');
+    final response = await http.post(
+      Uri.parse('https://hlvm.ru/receipts/customer/api/create'),
+      headers: <String, String>{
+        'Authorization': 'Token $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(<String, dynamic>{
+        'user': user['id'],
+        'name_seller': nameSeller, // Здесь передайте данные о продавце
+        'retail_place_address': retailPlaceAddress,
+        'retail_place': retailPlace,
+      }),
+    );
+    if (response.statusCode == 201) {
+      final Map<String, dynamic> responseData = jsonDecode(response.body);
+      final customerId = responseData['id'];
+      print('Customer ID: $customerId');
+    } else {
+      print('Failed to create customer. Status code: ${response.statusCode}');
+      print(response.body);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    _createReceipt();
     return Container(
         color: Theme.of(context).colorScheme.primaryContainer,
         child: Column(
