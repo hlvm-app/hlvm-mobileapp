@@ -37,7 +37,7 @@ jobs:
 
       # Install Dart dependencies
       - name: Install dependencies
-        run: fluuter pub get
+        run: flutter pub get
 
       # Analyze Dart project source
       - name: Analyze project source
