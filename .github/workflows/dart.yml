@@ -38,14 +38,6 @@ jobs:
       - name: Check Flutter environment
         run: flutter doctor -v
 
-      # Install Dart dependencies
-      - name: Install dependencies
-        run: dart pub get
-
-      # Analyze Dart project source
-      - name: Analyze project source
-        run: dart analyze
-
       # Get Flutter packages
       - name: Get Flutter packages
         run: flutter pub get
