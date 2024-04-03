@@ -54,7 +54,6 @@ class LiveDecodePageState extends State<LiveDecodePage> {
                 builder: (context) => PrepareDataQRCode(data: currentResult!.text),
               ),
             );
-            _copyToClipboard(currentResult!.text);
           }
         },
         child: Align(
@@ -70,8 +69,6 @@ class LiveDecodePageState extends State<LiveDecodePage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Text: ${currentResult?.text ?? 'Not found'}'),
-                Text('Format: ${currentResult?.barcodeFormat ?? 'Not found'}'),
                 Row(
                   children: [
                     ElevatedButton(

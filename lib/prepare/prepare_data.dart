@@ -60,6 +60,17 @@ class PrepareDataQRCode extends StatelessWidget {
     }
   }
 
+  String formatDate(String dateTimeString) {
+    DateTime dateTime = DateTime.parse(dateTimeString);
+    String formattedDate = '${dateTime.day.toString().padLeft(2, '0')}-'
+        '${dateTime.month.toString().padLeft(2, '0')}-'
+        '${dateTime.year} '
+        '${dateTime.hour.toString().padLeft(2, '0')}:'
+        '${dateTime.minute.toString().padLeft(2, '0')}:'
+        '${dateTime.second.toString().padLeft(2, '0')}';
+    return formattedDate;
+  }
+
   Future<void> _createReceipt(BuildContext context, Map<String, dynamic> jsonData) async {
     SharedPreferences preferences = await SharedPreferences.getInstance();
     String? token = preferences.getString('token');
@@ -83,7 +94,7 @@ class PrepareDataQRCode extends StatelessWidget {
     final nds20 = await _convertSum(findValueByKey(jsonData, 'nds20'));
     final totalSum = await _convertSum(findValueByKey(jsonData, 'totalSum'));
     final operationType = findValueByKey(jsonData, 'operationType');
-
+    print(receiptDate);
     final List<Map<String, dynamic>> products = [];
 
     for (var item in items) {
@@ -115,8 +126,8 @@ class PrepareDataQRCode extends StatelessWidget {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Confirm Receipt Creation'),
-          content: Text('Are you sure you want to create this receipt?'),
+          title: Text('Подтверждение'),
+          content: Text('Вы уверены, что хотите добавить этот чек?'),
           actions: [
             TextButton(
               onPressed: () {
@@ -157,12 +168,11 @@ class PrepareDataQRCode extends StatelessWidget {
         );
 
         if (response.statusCode == 201) {
-          print('Receipt created successfully.');
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
               title: Text('Success'),
-              content: Text('Receipt created successfully.'),
+              content: Text('Чек успешно добавлен.'),
               actions: [
                 TextButton(
                   onPressed: () {
@@ -227,25 +237,30 @@ class PrepareDataQRCode extends StatelessWidget {
               });
             }
 
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                ReceiptCard(
-                  nameSeller: findValueByKey(jsonData, 'user'),
-                  receiptDate: findValueByKey(jsonData, 'dateTime'),
-                  totalSum: _convertSum(findValueByKey(jsonData, 'totalSum')),
-                  products: items,
-                ),
-                SizedBox(height: 7),
-                ElevatedButton(
-                  onPressed: () async {
-                    await _createReceipt(context, jsonData);
-                  },
-                  child: Text('Create Receipt'),
-                ),
-                SizedBox(height: 6),
-              ],
+            return Center(
+
+              child: SingleChildScrollView(
+                child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  ReceiptCard(
+                    nameSeller: findValueByKey(jsonData, 'user'),
+                    receiptDate: formatDate(findValueByKey(jsonData, 'dateTime')),
+                    totalSum: _convertSum(findValueByKey(jsonData, 'totalSum')),
+                    products: items,
+                  ),
+                  SizedBox(height: 7),
+                  ElevatedButton(
+                    onPressed: () async {
+                      await _createReceipt(context, jsonData);
+                    },
+                    child: Text('Добавить чек'),
+                  ),
+                  SizedBox(height: 6),
+                ],
+              ),
+            )
             );
           } else {
             // Handle if itemsData is not a List<dynamic>
@@ -282,25 +297,24 @@ class ReceiptCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Seller: $nameSeller',
+              'Продавец: $nameSeller',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 8),
             Text(
-              'Date: $receiptDate',
+              'Дата: $receiptDate',
               style: TextStyle(fontSize: 14),
             ),
             SizedBox(height: 8),
             Text(
-              'Total Sum: ${totalSum?.toStringAsFixed(2)}',
+              'Итоговая сумма: ${totalSum?.toStringAsFixed(2)}',
               style: TextStyle(fontSize: 14),
             ),
-            SizedBox(height: 8),
+            SizedBox(height: 16),
             Text(
-              'Products:',
+              'Список продуктов:',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 1),
             ListView.builder(
               shrinkWrap: true,
               itemCount: products.length,
