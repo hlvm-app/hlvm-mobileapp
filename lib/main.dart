@@ -7,15 +7,12 @@ import 'package:hlvm_mobileapp/qr/live_decode.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:hlvm_mobileapp/prepare/prepare_data.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SharedPreferences preferences = await SharedPreferences.getInstance();
   bool isLoggedIn = preferences.getBool('isLoggedIn') ?? false;
   String? token = preferences.getString('token');
-  print(token);
-  print(isLoggedIn);
   await dotenv.load();
 
   runApp(MaterialApp(
@@ -296,6 +293,9 @@ class _AccountCardState extends State<AccountCard> {
 
 
 class ReceiptPage extends StatelessWidget {
+
+  ReceiptPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -312,7 +312,8 @@ class ReceiptPage extends StatelessWidget {
                     child: const Icon(Icons.qr_code_scanner_outlined),
                   ),
                 ],
-              )),
+              )
+          ),
         ),
       ),
     );

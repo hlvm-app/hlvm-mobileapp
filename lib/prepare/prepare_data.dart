@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:hlvm_mobileapp/main.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -94,7 +95,7 @@ class PrepareDataQRCode extends StatelessWidget {
     final nds20 = await _convertSum(findValueByKey(jsonData, 'nds20'));
     final totalSum = await _convertSum(findValueByKey(jsonData, 'totalSum'));
     final operationType = findValueByKey(jsonData, 'operationType');
-    print(receiptDate);
+
     final List<Map<String, dynamic>> products = [];
 
     for (var item in items) {
@@ -171,12 +172,11 @@ class PrepareDataQRCode extends StatelessWidget {
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
-              title: Text('Success'),
               content: Text('Чек успешно добавлен.'),
               actions: [
                 TextButton(
                   onPressed: () {
-                    Navigator.of(context).pop(); // Close dialog
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => MyHome(token: token)));
                   },
                   child: Text('OK'),
                 ),
@@ -184,17 +184,17 @@ class PrepareDataQRCode extends StatelessWidget {
             ),
           );
         } else {
-          print('Failed to create receipt. Status code: ${response.statusCode}');
-          print(response.body);
+          final responseBody = utf8.decode(response.bodyBytes);
+          final decodedResponse = jsonDecode(responseBody);
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
-              title: Text('Error'),
-              content: Text('Failed to create receipt. Status code: ${response.statusCode}'),
+              title: Text('Ошибка'),
+              content: Text(decodedResponse),
               actions: [
                 TextButton(
                   onPressed: () {
-                    Navigator.of(context).pop(); // Close dialog
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => MyHome(token: token)));
                   },
                   child: Text('OK'),
                 ),
