@@ -73,9 +73,9 @@ class LiveDecodePageState extends State<LiveDecodePage> {
                   children: [
                     ElevatedButton(
                         onPressed: () {
-                          Navigator.pop(context);
+                          Navigator.of(context).pushReplacementNamed('/MyHome');
                         },
-                        child: Icon(Icons.arrow_back)),
+                        child: Icon(Icons.home)),
                   ],
                 ),
               ],

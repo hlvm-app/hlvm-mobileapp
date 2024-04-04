@@ -6,6 +6,8 @@ import 'package:hlvm_mobileapp/main.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../qr/live_decode.dart';
+
 
 class PrepareDataQRCode extends StatelessWidget {
   final String? data;
@@ -176,7 +178,7 @@ class PrepareDataQRCode extends StatelessWidget {
               actions: [
                 TextButton(
                   onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => MyHome(token: token)));
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => LiveDecodePage()));
                   },
                   child: Text('OK'),
                 ),
@@ -194,7 +196,7 @@ class PrepareDataQRCode extends StatelessWidget {
               actions: [
                 TextButton(
                   onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => MyHome(token: token)));
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => LiveDecodePage()));
                   },
                   child: Text('OK'),
                 ),
