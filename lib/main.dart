@@ -7,6 +7,9 @@ import 'package:hlvm_mobileapp/qr/live_decode.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:dio/dio.dart';
+import 'package:dio_http_cache/dio_http_cache.dart';
+import 'package:hlvm_mobileapp/prepare/prepare_data.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,13 +25,16 @@ void main() async {
         LiveDecodePage.routeName: (context) => const LiveDecodePage(),
       },
       theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.green, brightness: Brightness.dark,)
-      ),
+          colorScheme: ColorScheme.fromSeed(
+        seedColor: Colors.green,
+        brightness: Brightness.dark,
+      )),
       debugShowCheckedModeBanner: false));
 }
 
 class MyHome extends StatefulWidget {
   final String? token;
+
   const MyHome({super.key, required this.token});
 
   @override
@@ -62,7 +68,8 @@ class _MyHomeState extends State<MyHome> {
                   NavigationRailDestination(
                       icon: Icon(Icons.home), label: Text('Домашняя страница')),
                   NavigationRailDestination(
-                      icon: Icon(Icons.account_balance_wallet_outlined), label: Text('Счета')),
+                      icon: Icon(Icons.account_balance_wallet_outlined),
+                      label: Text('Счета')),
                   NavigationRailDestination(
                       icon: Icon(Icons.receipt), label: Text('Чеки')),
                 ],
@@ -90,6 +97,7 @@ class _MyHomeState extends State<MyHome> {
       );
     });
   }
+
   void _logout() async {
     final preferences = await SharedPreferences.getInstance();
     await preferences.setBool('isLoggedIn', false);
@@ -105,21 +113,21 @@ class _MyHomeState extends State<MyHome> {
 }
 
 class HomePage extends StatelessWidget {
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: Text('Домашняя страница', style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),),
+        child: Text(
+          'Домашняя страница',
+          style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+        ),
       ),
     );
   }
 }
 
-
 class AccountPage extends StatefulWidget {
   final String? token;
-
 
   AccountPage({Key? key, this.token}) : super(key: key);
 
@@ -141,7 +149,6 @@ class _AccountPageState extends State<AccountPage> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
       selectedAccountId = prefs.getInt('selectedAccount');
-
     });
   }
 
@@ -183,7 +190,6 @@ class _AccountPageState extends State<AccountPage> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<Map<String, dynamic>>?>(
@@ -217,7 +223,6 @@ class _AccountPageState extends State<AccountPage> {
                       name: account['name_account'],
                       balance: account['balance'],
                       currency: account['currency'],
-
                       isSelected: selectedAccountId == account['id'],
                       onSelect: () async {
                         await _selectAccount(account['id']);
@@ -233,7 +238,6 @@ class _AccountPageState extends State<AccountPage> {
     );
   }
 }
-
 
 class AccountCard extends StatefulWidget {
   const AccountCard({
@@ -291,28 +295,163 @@ class _AccountCardState extends State<AccountCard> {
   }
 }
 
+class ReceiptPage extends StatefulWidget {
+  ReceiptPage({Key? key}) : super(key: key);
 
-class ReceiptPage extends StatelessWidget {
+  @override
+  State<ReceiptPage> createState() => _ReceiptPageState();
+}
 
-  ReceiptPage({super.key});
+class _ReceiptPageState extends State<ReceiptPage> {
+  late List<Map<String, dynamic>> _receiptList;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _receiptList = [];
+    listReceipt();
+  }
+
+  double _convertSum(dynamic number) {
+    if (number != null) {
+      return double.parse(number.toString());
+    } else {
+      return 0;
+    }
+  }
+
+  dynamic findValueByKey(Map<String, dynamic> json, String key) {
+    dynamic result;
+
+    json.forEach((k, v) {
+      if (k == key) {
+        result = v;
+      }
+
+      if (v is Map<String, dynamic>) {
+        var innerResult = findValueByKey(v, key);
+
+        if (innerResult != null) {
+          result = innerResult;
+        }
+      }
+
+      if (result != null) {
+        return;
+      }
+    });
+
+    return result;
+  }
+
+  Future<void> listReceipt() async {
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    String? token = preferences.getString('token');
+
+    Dio dio = Dio();
+    dio.interceptors.add(DioCacheManager(CacheConfig(baseUrl: 'https://hlvm.ru/receipts/api/list')).interceptor);
+    dio.options.headers['Authorization'] = 'Token $token';
+
+    Response response;
+    try {
+      response = await dio.get(
+        'https://hlvm.ru/receipts/api/list',
+        options: buildCacheOptions(
+          Duration(days: 7), // Кэширование на 7 дней
+          maxStale: Duration(days: 7), // Разрешить использовать устаревшие данные на 7 дней
+          forceRefresh: true, // Принудительно обновить данные из сети
+        ),
+      );
+      print(response);
+    } catch (e) {
+      print('Ошибка при получении чеков: $e');
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+
+    final decodedResponse = response.data;
+    setState(() {
+      _receiptList = List<Map<String, dynamic>>.from(decodedResponse);
+      _isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        color: Theme.of(context).colorScheme.primaryContainer,
-        child: SafeArea(
-          child: Align(
-              alignment: Alignment.topRight,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ElevatedButton(
-                    onPressed: () => LiveDecodePage.open(context),
-                    child: const Icon(Icons.qr_code_scanner_outlined),
-                  ),
-                ],
-              )
+      appBar: AppBar(
+        title: Text('Список чеков'),
+        actions: [
+          IconButton(
+            onPressed: () => LiveDecodePage.open(context),
+            icon: Icon(Icons.qr_code_scanner_outlined),
+          ),
+        ],
+      ),
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator())
+          : _receiptList.isEmpty
+              ? Center(
+                  child: Text('Нет доступных чеков'),
+                )
+              : ListView.builder(
+                  itemCount: _receiptList.length,
+                  itemBuilder: (context, index) {
+                    final receipt = _receiptList[index];
+                    final totalSum = _convertSum(findValueByKey(receipt, 'total_sum'));
+                    print(receipt);
+                    return ReceiptCard(
+                      id: receipt['id'],
+                      receiptDate: DateTime.parse(receipt['receipt_date']),
+                      totalSum: totalSum,
+                      onTap: () {
+                        // Обработка нажатия на карточку чека
+                      },
+                    );
+                  },
+                ),
+    );
+  }
+}
+
+class ReceiptCard extends StatelessWidget {
+  const ReceiptCard({
+    Key? key,
+    required this.id,
+    required this.receiptDate,
+    required this.totalSum,
+    required this.onTap,
+  }) : super(key: key);
+
+  final int id;
+  final DateTime receiptDate;
+  final double totalSum;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(15),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(height: 5),
+              Text(
+                'Дата: ${receiptDate.toString()}',
+                style: TextStyle(fontSize: 12),
+              ),
+              SizedBox(height: 5),
+              Text(
+                'Сумма: $totalSum',
+                style: TextStyle(fontSize: 12),
+              ),
+            ],
           ),
         ),
       ),
