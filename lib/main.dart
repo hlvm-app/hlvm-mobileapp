@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hlvm_mobileapp/auth/auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,7 +9,6 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_http_cache/dio_http_cache.dart';
-import 'package:hlvm_mobileapp/prepare/prepare_data.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -310,7 +309,12 @@ class _ReceiptPageState extends State<ReceiptPage> {
   void initState() {
     super.initState();
     _receiptList = [];
-    listReceipt();
+    loadSellerData();
+  }
+
+  Future<void> loadSellerData() async {
+    await listSeller();
+    await listReceipt();
   }
 
   double _convertSum(dynamic number) {
@@ -326,7 +330,11 @@ class _ReceiptPageState extends State<ReceiptPage> {
 
     json.forEach((k, v) {
       if (k == key) {
-        result = v;
+        if (key == 'user' && v is! String) {
+          result = '';
+        } else {
+          result = v;
+        }
       }
 
       if (v is Map<String, dynamic>) {
@@ -345,12 +353,49 @@ class _ReceiptPageState extends State<ReceiptPage> {
     return result;
   }
 
+  Future<String?> listSeller({int sellerId = 907}) async {
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    String? token = preferences.getString('token');
+
+    Dio dio = Dio();
+    dio.interceptors.add(DioCacheManager(
+            CacheConfig(baseUrl: 'https://hlvm.ru/receipts/seller/$sellerId'))
+        .interceptor);
+    dio.options.headers['Authorization'] = 'Token $token';
+
+    Response response;
+    try {
+      response = await dio.get(
+        'https://hlvm.ru/receipts/seller/$sellerId',
+        options: buildCacheOptions(
+          Duration(days: 7), // Кэширование на 7 дней
+          maxStale: Duration(days: 7),
+          // Разрешить использовать устаревшие данные на 7 дней
+          forceRefresh: true, // Принудительно обновить данные из сети
+        ),
+      );
+
+      final List<Map<String, dynamic>> sellers =
+          List<Map<String, dynamic>>.from(response.data);
+      for (var seller in sellers) {
+        if (seller['id'] == sellerId) {
+          return seller['name_seller']; // Возвращаем имя продавца
+        }
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   Future<void> listReceipt() async {
     SharedPreferences preferences = await SharedPreferences.getInstance();
     String? token = preferences.getString('token');
 
     Dio dio = Dio();
-    dio.interceptors.add(DioCacheManager(CacheConfig(baseUrl: 'https://hlvm.ru/receipts/api/list')).interceptor);
+    dio.interceptors.add(DioCacheManager(
+            CacheConfig(baseUrl: 'https://hlvm.ru/receipts/api/list'))
+        .interceptor);
     dio.options.headers['Authorization'] = 'Token $token';
 
     Response response;
@@ -359,13 +404,12 @@ class _ReceiptPageState extends State<ReceiptPage> {
         'https://hlvm.ru/receipts/api/list',
         options: buildCacheOptions(
           Duration(days: 7), // Кэширование на 7 дней
-          maxStale: Duration(days: 7), // Разрешить использовать устаревшие данные на 7 дней
+          maxStale: Duration(days: 7),
+          // Разрешить использовать устаревшие данные на 7 дней
           forceRefresh: true, // Принудительно обновить данные из сети
         ),
       );
-      print(response);
     } catch (e) {
-      print('Ошибка при получении чеков: $e');
       setState(() {
         _isLoading = false;
       });
@@ -401,15 +445,140 @@ class _ReceiptPageState extends State<ReceiptPage> {
                   itemCount: _receiptList.length,
                   itemBuilder: (context, index) {
                     final receipt = _receiptList[index];
-                    final totalSum = _convertSum(findValueByKey(receipt, 'total_sum'));
-                    print(receipt);
-                    return ReceiptCard(
-                      id: receipt['id'],
-                      receiptDate: DateTime.parse(receipt['receipt_date']),
-                      totalSum: totalSum,
-                      onTap: () {
-                        // Обработка нажатия на карточку чека
-                      },
+                    final totalSum =
+                        _convertSum(findValueByKey(receipt, 'total_sum'));
+
+                    return FutureBuilder<String?>(
+                      future: listSeller(sellerId: receipt['customer']),
+                      builder: (context, snapshot) {
+                          final sellerName = snapshot.data ?? 'Загрузка...';
+
+                          return ReceiptCard(
+                            id: receipt['id'],
+                            seller: sellerName,
+                            receiptDate:
+                                DateTime.parse(receipt['receipt_date']),
+                            totalSum: totalSum,
+                            onTap: () {
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: Text('Информация о товарах:', style: TextStyle(
+                                      fontSize: 16,
+                                    ),),
+                                    content: SingleChildScrollView(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          for (var product
+                                              in receipt['product'])
+                                            ListTile(
+                                              title: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  RichText(
+                                                    text: TextSpan(
+                                                      style:
+                                                      DefaultTextStyle.of(
+                                                          context)
+                                                          .style,
+                                                      children: [
+                                                        TextSpan(
+                                                          text: 'Наименование: ',
+                                                          style: TextStyle(
+                                                              fontWeight:
+                                                              FontWeight
+                                                                  .bold),
+                                                        ),
+                                                        TextSpan(
+                                                            text:
+                                                            '${product['product_name']}'),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  RichText(
+                                                    text: TextSpan(
+                                                      style:
+                                                          DefaultTextStyle.of(
+                                                                  context)
+                                                              .style,
+                                                      children: [
+                                                        TextSpan(
+                                                          text: 'Цена: ',
+                                                          style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold),
+                                                        ),
+                                                        TextSpan(
+                                                            text:
+                                                                '${product['price']}'),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  RichText(
+                                                    text: TextSpan(
+                                                      style:
+                                                          DefaultTextStyle.of(
+                                                                  context)
+                                                              .style,
+                                                      children: [
+                                                        TextSpan(
+                                                          text: 'Количество: ',
+                                                          style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold),
+                                                        ),
+                                                        TextSpan(
+                                                            text:
+                                                                '${product['quantity']}'),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                  RichText(
+                                                    text: TextSpan(
+                                                      style:
+                                                          DefaultTextStyle.of(
+                                                                  context)
+                                                              .style,
+                                                      children: [
+                                                        TextSpan(
+                                                          text: 'Сумма: ',
+                                                          style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold),
+                                                        ),
+                                                        TextSpan(
+                                                            text:
+                                                                '${product['amount']}'),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: Text('Закрыть'),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            },
+                          );
+                        }
                     );
                   },
                 ),
@@ -423,12 +592,14 @@ class ReceiptCard extends StatelessWidget {
     required this.id,
     required this.receiptDate,
     required this.totalSum,
+    required this.seller,
     required this.onTap,
   }) : super(key: key);
 
   final int id;
   final DateTime receiptDate;
   final double totalSum;
+  final String? seller;
   final VoidCallback onTap;
 
   @override
@@ -442,6 +613,10 @@ class ReceiptCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(height: 5),
+              Text(
+                'Продавец: ${seller.toString()}',
+                style: TextStyle(fontSize: 12),
+              ),
               Text(
                 'Дата: ${receiptDate.toString()}',
                 style: TextStyle(fontSize: 12),
