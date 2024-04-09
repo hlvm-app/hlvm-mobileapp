@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:hlvm_mobileapp/auth/auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hlvm_mobileapp/qr/live_decode.dart';
+import 'package:hlvm_mobileapp/qr/scanner.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -21,7 +22,7 @@ void main() async {
       home: isLoggedIn ? MyHome(token: token!) : LoginForm(),
       routes: {
         '/MyHome': (context) => MyHome(token: token),
-        LiveDecodePage.routeName: (context) => const LiveDecodePage(),
+        '/QRCodeScannerFromFileForm': (context) => QRCodeScannerFromFileForm(),
       },
       theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
@@ -429,6 +430,12 @@ class _ReceiptPageState extends State<ReceiptPage> {
       appBar: AppBar(
         title: Text('Список чеков'),
         actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/QRCodeScannerFromFileForm');
+            },
+            icon: Icon(Icons.upload_file_outlined),
+          ),
           IconButton(
             onPressed: () => LiveDecodePage.open(context),
             icon: Icon(Icons.qr_code_scanner_outlined),

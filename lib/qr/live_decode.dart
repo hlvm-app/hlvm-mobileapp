@@ -48,6 +48,7 @@ class LiveDecodePageState extends State<LiveDecodePage> {
             currentResult = result;
           });
           if (currentResult != null) {
+            _copyToClipboard(currentResult!.text);
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
@@ -88,12 +89,8 @@ class LiveDecodePageState extends State<LiveDecodePage> {
 
   void _copyToClipboard(String? data) {
     if (data != null) {
-      Clipboard.setData(ClipboardData(text: data));
-      _showSnackBar(context, 'Copied to clipboard');
       _vibrate();
-      _launchURL('https://t.me/GetReceiptBot');
     } else {
-      _showSnackBar(context, 'No data to copy');
       _vibrate();
     }
   }

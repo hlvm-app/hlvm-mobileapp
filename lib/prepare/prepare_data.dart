@@ -178,7 +178,7 @@ class PrepareDataQRCode extends StatelessWidget {
               actions: [
                 TextButton(
                   onPressed: () {
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LiveDecodePage()));
+                    Navigator.of(context).pushReplacementNamed('/MyHome');
                   },
                   child: Text('OK'),
                 ),
@@ -196,7 +196,7 @@ class PrepareDataQRCode extends StatelessWidget {
               actions: [
                 TextButton(
                   onPressed: () {
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LiveDecodePage()));
+                    Navigator.of(context).pushReplacementNamed('/MyHome');
                   },
                   child: Text('OK'),
                 ),
