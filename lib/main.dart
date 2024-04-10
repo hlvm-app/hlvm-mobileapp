@@ -23,6 +23,7 @@ void main() async {
       routes: {
         '/MyHome': (context) => MyHome(token: token),
         '/QRCodeScannerFromFileForm': (context) => QRCodeScannerFromFileForm(),
+        LiveDecodePage.routeName: (context) => const LiveDecodePage(),
       },
       theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
