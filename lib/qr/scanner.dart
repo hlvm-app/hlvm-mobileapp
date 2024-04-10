@@ -12,6 +12,7 @@ class QRCodeScannerFromFileForm extends StatefulWidget {
 class _QRCodeScannerFromFileFormState extends State<QRCodeScannerFromFileForm> {
   String _scanResult = 'No QR code scanned';
   String? _filePath;
+  String? _selectedFileName;
 
   Future<void> _selectFile() async {
     final result = await FilePicker.platform.pickFiles(
@@ -22,6 +23,7 @@ class _QRCodeScannerFromFileFormState extends State<QRCodeScannerFromFileForm> {
     if (result != null) {
       setState(() {
         _filePath = result.files.single.path!;
+        _selectedFileName = result.files.single.name;
       });
     }
   }
@@ -71,7 +73,7 @@ class _QRCodeScannerFromFileFormState extends State<QRCodeScannerFromFileForm> {
           SizedBox(height: 20),
           Center(
             child: Text(
-              'Scanned Result: \n$_scanResult',
+              'Selected File: \n${_selectedFileName ?? "No file selected"}', // Отображаем имя выбранного файла
               style: TextStyle(fontSize: 18, color: Colors.blueGrey),
               textAlign: TextAlign.center,
             ),
