@@ -40,6 +40,7 @@ class PrepareDataQRCode extends StatelessWidget {
 
   Future<Map<String, dynamic>?> getJson() async {
     final token = dotenv.env['TOKEN'];
+    print(data);
     final response =
         await http.post(Uri.parse('https://proverkacheka.com/api/v1/check/get'),
             body: {

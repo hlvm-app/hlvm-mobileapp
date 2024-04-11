@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hlvm_mobileapp/prepare/prepare_data.dart';
 
 class UserDataForm extends StatefulWidget {
   @override
@@ -36,7 +37,7 @@ class _UserDataFormState extends State<UserDataForm> {
                 if (_formKey.currentState!.validate()) {
                   // Данные прошли валидацию
                   // Здесь можно обработать данные, например, отправить их на сервер
-                  // Или вывести их в консоль
+                  const dateTime = null;
                   if (_selectedDate != null && _selectedTime != null) {
                     DateTime dateTime = DateTime(
                       _selectedDate!.year,
@@ -51,6 +52,12 @@ class _UserDataFormState extends State<UserDataForm> {
                   print('Номер ФН: ${_fnController.text}');
                   print('Номер ФД: ${_fdController.text}');
                   print('Номер ФП: ${_fpController.text}');
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PrepareDataQRCode(data: 't=$dateTime&s=${_sumController.text}&fn=${_fnController.text}&i=${_fdController.text}&fp=${_fpController.text}&n=1'),
+                    ),
+                  );
                 }
               },
               child: Text('Отправить'),
