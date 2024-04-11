@@ -5,6 +5,7 @@ import 'package:hlvm_mobileapp/auth/auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hlvm_mobileapp/qr/live_decode.dart';
 import 'package:hlvm_mobileapp/qr/scanner.dart';
+import 'package:hlvm_mobileapp/qr/manual_form.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -23,6 +24,7 @@ void main() async {
       routes: {
         '/MyHome': (context) => MyHome(token: token),
         '/QRCodeScannerFromFileForm': (context) => QRCodeScannerFromFileForm(),
+        '/UserDataForm': (context) => UserDataForm(),
         LiveDecodePage.routeName: (context) => const LiveDecodePage(),
       },
       theme: ThemeData(
@@ -436,6 +438,12 @@ class _ReceiptPageState extends State<ReceiptPage> {
               Navigator.pushNamed(context, '/QRCodeScannerFromFileForm');
             },
             icon: Icon(Icons.upload_file_outlined),
+          ),
+          IconButton(
+            onPressed: () {
+              Navigator.pushNamed(context, '/UserDataForm');
+            },
+            icon: Icon(Icons.text_snippet_outlined),
           ),
           IconButton(
             onPressed: () => LiveDecodePage.open(context),
