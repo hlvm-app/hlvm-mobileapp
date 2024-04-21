@@ -3,7 +3,7 @@
     <application
         android:label="Hasta La Vista, Money!"
         android:name="${applicationName}"
-        android:icon="@mipmap/qrcode">
+        android:icon="@mipmap/icon">
         <activity
             android:name=".MainActivity"
             android:exported="true"
