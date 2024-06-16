@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:hlvm_mobileapp/main.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:hlvm_mobileapp/prepare/prepare_data.dart';
 
 
 class LoginForm extends StatefulWidget {
@@ -20,7 +19,7 @@ class _LoginFormState extends State<LoginForm> {
  
   Future<void> _login() async {
     final response = await http.post(
-        Uri.parse('https://hlvm.ru/users/login/'), body: jsonEncode(<String, String>{
+        Uri.parse('https://hlvm.pavlovteam.ru/users/login/'), body: jsonEncode(<String, String>{
       'username': _usernameController.text, 
       'password': _passwordController.text, 
     }));

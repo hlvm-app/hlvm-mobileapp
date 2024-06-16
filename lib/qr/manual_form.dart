@@ -8,8 +8,8 @@ class UserDataForm extends StatefulWidget {
 
 class _UserDataFormState extends State<UserDataForm> {
   final _formKey = GlobalKey<FormState>();
-  DateTime? _selectedDate = null;
-  TimeOfDay? _selectedTime = null;
+  DateTime? _selectedDate;
+  TimeOfDay? _selectedTime;
   TextEditingController _sumController = TextEditingController();
   TextEditingController _fnController = TextEditingController();
   TextEditingController _fdController = TextEditingController();

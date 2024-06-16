@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:qr_code_dart_scan/qr_code_dart_scan.dart';
 import 'package:vibration/vibration.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter/services.dart';
 
 import 'package:hlvm_mobileapp/prepare/prepare_data.dart';
 

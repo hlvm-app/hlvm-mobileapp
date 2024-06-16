@@ -2,11 +2,9 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:hlvm_mobileapp/main.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../qr/live_decode.dart';
 
 
 class PrepareDataQRCode extends StatelessWidget {
@@ -80,7 +78,7 @@ class PrepareDataQRCode extends StatelessWidget {
     String? token = preferences.getString('token');
     int? selectedAccount = preferences.getInt('selectedAccount');
     final responseUser = await http.get(
-      Uri.parse('https://hlvm.ru/users/list/user'),
+      Uri.parse('https://hlvm.pavlovteam.ru/users/list/user'),
       headers: <String, String>{
         'Authorization': 'Token $token',
       },
@@ -94,20 +92,20 @@ class PrepareDataQRCode extends StatelessWidget {
     final items = findValueByKey(jsonData, 'items');
     final receiptDate = findValueByKey(jsonData, 'dateTime');
     final numberReceipt = findValueByKey(jsonData, 'fiscalDocumentNumber');
-    final nds10 = await _convertSum(findValueByKey(jsonData, 'nds10'));
-    final nds20 = await _convertSum(findValueByKey(jsonData, 'nds20'));
-    final totalSum = await _convertSum(findValueByKey(jsonData, 'totalSum'));
+    final nds10 = _convertSum(findValueByKey(jsonData, 'nds10'));
+    final nds20 = _convertSum(findValueByKey(jsonData, 'nds20'));
+    final totalSum = _convertSum(findValueByKey(jsonData, 'totalSum'));
     final operationType = findValueByKey(jsonData, 'operationType');
 
     final List<Map<String, dynamic>> products = [];
 
     for (var item in items) {
       final name = findValueByKey(item, 'name');
-      final amount = await _convertSum(findValueByKey(item, 'sum'));
+      final amount = _convertSum(findValueByKey(item, 'sum'));
       final quantity = findValueByKey(item, 'quantity');
-      final price = await _convertSum(findValueByKey(item, 'price'));
+      final price = _convertSum(findValueByKey(item, 'price'));
       final ndsType = findValueByKey(item, 'nds');
-      final ndsNum = await _convertSum(findValueByKey(item, 'ndsSum'));
+      final ndsNum = _convertSum(findValueByKey(item, 'ndsSum'));
       products.add({
         'user': user['id'],
         'product_name': name,
@@ -152,7 +150,7 @@ class PrepareDataQRCode extends StatelessWidget {
 
     if (confirmed == true) {
         final response = await http.post(
-          Uri.parse('https://hlvm.ru/receipts/api/create'),
+          Uri.parse('https://hlvm.pavlovteam.ru/receipts/api/create'),
           headers: <String, String>{
             'Authorization': 'Token $token',
             'Content-Type': 'application/json',

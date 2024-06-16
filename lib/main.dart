@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hlvm_mobileapp/auth/auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -132,7 +131,7 @@ class HomePage extends StatelessWidget {
 class AccountPage extends StatefulWidget {
   final String? token;
 
-  AccountPage({Key? key, this.token}) : super(key: key);
+  AccountPage({super.key, this.token});
 
   @override
   State<AccountPage> createState() => _AccountPageState();
@@ -167,7 +166,7 @@ class _AccountPageState extends State<AccountPage> {
   Future<List<Map<String, dynamic>>?> _getAccount(String? token) async {
     try {
       final response = await http.get(
-        Uri.parse('https://hlvm.ru/account/api/list'),
+        Uri.parse('https://hlvm.pavlovteam.ru/account/api/list'),
         headers: {'Authorization': 'Token $token'},
       );
       if (response.statusCode == 200) {
@@ -299,7 +298,7 @@ class _AccountCardState extends State<AccountCard> {
 }
 
 class ReceiptPage extends StatefulWidget {
-  ReceiptPage({Key? key}) : super(key: key);
+  ReceiptPage({super.key});
 
   @override
   State<ReceiptPage> createState() => _ReceiptPageState();
@@ -363,14 +362,14 @@ class _ReceiptPageState extends State<ReceiptPage> {
 
     Dio dio = Dio();
     dio.interceptors.add(DioCacheManager(
-            CacheConfig(baseUrl: 'https://hlvm.ru/receipts/seller/$sellerId'))
+            CacheConfig(baseUrl: 'https://hlvm.pavlovteam.ru/receipts/seller/$sellerId'))
         .interceptor);
     dio.options.headers['Authorization'] = 'Token $token';
 
     Response response;
     try {
       response = await dio.get(
-        'https://hlvm.ru/receipts/seller/$sellerId',
+        'https://hlvm.pavlovteam.ru/receipts/seller/$sellerId',
         options: buildCacheOptions(
           Duration(days: 7), // Кэширование на 7 дней
           maxStale: Duration(days: 7),
@@ -398,14 +397,14 @@ class _ReceiptPageState extends State<ReceiptPage> {
 
     Dio dio = Dio();
     dio.interceptors.add(DioCacheManager(
-            CacheConfig(baseUrl: 'https://hlvm.ru/receipts/api/list'))
+            CacheConfig(baseUrl: 'https://hlvm.pavlovteam.ru/receipts/api/list'))
         .interceptor);
     dio.options.headers['Authorization'] = 'Token $token';
 
     Response response;
     try {
       response = await dio.get(
-        'https://hlvm.ru/receipts/api/list',
+        'https://hlvm.pavlovteam.ru/receipts/api/list',
         options: buildCacheOptions(
           Duration(days: 7), // Кэширование на 7 дней
           maxStale: Duration(days: 7),
@@ -604,13 +603,13 @@ class _ReceiptPageState extends State<ReceiptPage> {
 
 class ReceiptCard extends StatelessWidget {
   const ReceiptCard({
-    Key? key,
+    super.key,
     required this.id,
     required this.receiptDate,
     required this.totalSum,
     required this.seller,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   final int id;
   final DateTime receiptDate;
