@@ -73,6 +73,16 @@ class PrepareDataQRCode extends StatelessWidget {
     return formattedDate;
   }
 
+  Future<void> clearData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.remove('sum');
+    prefs.remove('fn');
+    prefs.remove('fd');
+    prefs.remove('fp');
+    prefs.remove('selectedDate');
+    prefs.remove('selectedTime');
+  }
+
   Future<void> _createReceipt(BuildContext context, Map<String, dynamic> jsonData) async {
     SharedPreferences preferences = await SharedPreferences.getInstance();
     String? token = preferences.getString('token');
@@ -169,7 +179,11 @@ class PrepareDataQRCode extends StatelessWidget {
           }),
         );
 
+
+        print(response.statusCode);
         if (response.statusCode == 201) {
+
+          await clearData();
           showDialog(
             context: context,
             builder: (context) => AlertDialog(

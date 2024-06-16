@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:hlvm_mobileapp/prepare/prepare_data.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
+
 
 class UserDataForm extends StatefulWidget {
   @override
@@ -10,10 +13,54 @@ class _UserDataFormState extends State<UserDataForm> {
   final _formKey = GlobalKey<FormState>();
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
+  DateTime? dateTime;
   TextEditingController _sumController = TextEditingController();
   TextEditingController _fnController = TextEditingController();
   TextEditingController _fdController = TextEditingController();
   TextEditingController _fpController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedData();
+  }
+
+  Future<void> _loadSavedData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _sumController.text = prefs.getString('sum') ?? '';
+      _fnController.text = prefs.getString('fn') ?? '';
+      _fdController.text = prefs.getString('fd') ?? '';
+      _fpController.text = prefs.getString('fp') ?? '';
+      String? savedDate = prefs.getString('selectedDate');
+      String? savedTime = prefs.getString('selectedTime');
+      if (savedDate != null) {
+        _selectedDate = DateTime.parse(savedDate);
+      }
+      if (savedTime != null) {
+        _selectedTime = TimeOfDay(
+          hour: int.parse(savedTime.split(":")[0]),
+          minute: int.parse(savedTime.split(":")[1]),
+        );
+      }
+    });
+  }
+
+  Future<void> _saveData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('sum', _sumController.text);
+    prefs.setString('fn', _fnController.text);
+    prefs.setString('fd', _fdController.text);
+    prefs.setString('fp', _fpController.text);
+    if (_selectedDate != null) {
+      prefs.setString('selectedDate', _selectedDate!.toIso8601String());
+    }
+    if (_selectedTime != null) {
+      prefs.setString('selectedTime', "${_selectedTime!.hour}:${_selectedTime!.minute}");
+    }
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -33,29 +80,25 @@ class _UserDataFormState extends State<UserDataForm> {
             _buildFpField(),
             SizedBox(height: 20.0),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 if (_formKey.currentState!.validate()) {
+                  await _saveData();
                   // Данные прошли валидацию
                   // Здесь можно обработать данные, например, отправить их на сервер
-                  const dateTime = null;
                   if (_selectedDate != null && _selectedTime != null) {
-                    DateTime dateTime = DateTime(
+                    dateTime = DateTime(
                       _selectedDate!.year,
                       _selectedDate!.month,
                       _selectedDate!.day,
                       _selectedTime!.hour,
                       _selectedTime!.minute,
                     );
-                    print('Дата и время: $dateTime');
                   }
-                  print('Сумма чека: ${_sumController.text}');
-                  print('Номер ФН: ${_fnController.text}');
-                  print('Номер ФД: ${_fdController.text}');
-                  print('Номер ФП: ${_fpController.text}');
+                  String formattedDateTime = DateFormat('yyyyMMddTHHmm').format(dateTime!);
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => PrepareDataQRCode(data: 't=$dateTime&s=${_sumController.text}&fn=${_fnController.text}&i=${_fdController.text}&fp=${_fpController.text}&n=1'),
+                      builder: (context) => PrepareDataQRCode(data: 't=$formattedDateTime&s=${_sumController.text}&fn=${_fnController.text}&i=${_fdController.text}&fp=${_fpController.text}&n=1'),
                     ),
                   );
                 }
@@ -91,6 +134,7 @@ class _UserDataFormState extends State<UserDataForm> {
                       setState(() {
                         _selectedDate = pickedDate;
                       });
+                      await _saveData();
                     }
                   },
                 ),
@@ -113,6 +157,7 @@ class _UserDataFormState extends State<UserDataForm> {
                       setState(() {
                         _selectedTime = pickedTime;
                       });
+                      await _saveData();
                     }
                   },
                 ),
@@ -138,6 +183,9 @@ class _UserDataFormState extends State<UserDataForm> {
         }
         return null;
       },
+      onChanged: (value) async {
+        await _saveData();
+      },
     );
   }
 
@@ -151,6 +199,9 @@ class _UserDataFormState extends State<UserDataForm> {
           return 'Пожалуйста, введите номер ФН';
         }
         return null;
+      },
+      onChanged: (value) async {
+        await _saveData();
       },
     );
   }
@@ -166,6 +217,9 @@ class _UserDataFormState extends State<UserDataForm> {
         }
         return null;
       },
+      onChanged: (value) async {
+        await _saveData();
+      },
     );
   }
 
@@ -179,6 +233,9 @@ class _UserDataFormState extends State<UserDataForm> {
           return 'Пожалуйста, введите номер ФП';
         }
         return null;
+      },
+      onChanged: (value) async {
+        await _saveData();
       },
     );
   }
