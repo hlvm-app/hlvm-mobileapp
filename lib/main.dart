@@ -27,12 +27,10 @@ void main() async {
         LiveDecodePage.routeName: (context) => const LiveDecodePage(),
       },
       theme: ThemeData(
-        primaryColor: Color(0xFFFFFFFF),
-        accentColor: Color(0xFF34C759),
-        textTheme: TextTheme(
-          bodyText2: TextStyle(color: Color(0xFF333333)),
-        ),
-      ),
+          colorScheme: ColorScheme.fromSeed(
+        seedColor: Colors.green,
+        brightness: Brightness.dark,
+      )),
       debugShowCheckedModeBanner: false));
 }
 
