@@ -29,8 +29,9 @@ void main() async {
       theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(
         seedColor: Colors.green,
-        brightness: Brightness.dark,
-      )),
+        brightness: Brightness.light,
+      ),
+      ),
       debugShowCheckedModeBanner: false));
 }
 
@@ -68,12 +69,12 @@ class _MyHomeState extends State<MyHome> {
                 extended: constraints.maxWidth >= 600,
                 destinations: [
                   NavigationRailDestination(
-                      icon: Icon(Icons.home), label: Text('Домашняя страница')),
+                      icon: Icon(Icons.home, color: Colors.green), label: Text('Домашняя страница')),
                   NavigationRailDestination(
-                      icon: Icon(Icons.account_balance_wallet_outlined),
+                      icon: Icon(Icons.account_balance_wallet_outlined, color: Colors.green),
                       label: Text('Счета')),
                   NavigationRailDestination(
-                      icon: Icon(Icons.receipt), label: Text('Чеки')),
+                      icon: Icon(Icons.receipt, color: Colors.green), label: Text('Чеки')),
                 ],
                 selectedIndex: selectedIndex,
                 onDestinationSelected: (value) {
@@ -121,7 +122,7 @@ class HomePage extends StatelessWidget {
       body: Center(
         child: Text(
           'Домашняя страница',
-          style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold, color: Colors.green),
         ),
       ),
     );
@@ -430,23 +431,28 @@ class _ReceiptPageState extends State<ReceiptPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Список чеков'),
+        title: Text(
+            'Список чеков',
+            style: TextStyle(
+            color: Colors.green,
+        ),
+        ),
         actions: [
           IconButton(
             onPressed: () {
               Navigator.pushNamed(context, '/QRCodeScannerFromFileForm');
             },
-            icon: Icon(Icons.upload_file_outlined),
+            icon: Icon(Icons.upload_file_outlined, color: Colors.green),
           ),
           IconButton(
             onPressed: () {
               Navigator.pushNamed(context, '/UserDataForm');
             },
-            icon: Icon(Icons.text_snippet_outlined),
+            icon: Icon(Icons.text_snippet_outlined, color: Colors.green),
           ),
           IconButton(
             onPressed: () => LiveDecodePage.open(context),
-            icon: Icon(Icons.qr_code_scanner_outlined),
+            icon: Icon(Icons.qr_code_scanner_outlined, color: Colors.green),
           ),
         ],
       ),
@@ -454,7 +460,9 @@ class _ReceiptPageState extends State<ReceiptPage> {
           ? Center(child: CircularProgressIndicator())
           : _receiptList.isEmpty
               ? Center(
-                  child: Text('Нет доступных чеков'),
+                  child: Text('Нет доступных чеков', style: TextStyle(
+                    color: Colors.green,
+                  ),),
                 )
               : ListView.builder(
                   itemCount: _receiptList.length,
